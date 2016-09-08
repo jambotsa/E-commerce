@@ -1,6 +1,7 @@
 
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
+var crypto = require ('crypto');
 var Schema = mongoose.Schema;
 
 /* create user schema /characteristics*/
@@ -14,6 +15,7 @@ var UserSchema = new Schema({
 	},	
 
 	address	: String,
+	zipcode: String,
 	history: [{
 		date:Date,
 		paid:{type: Number, default :0},
@@ -58,5 +60,14 @@ UserSchema.pre('save', function(next){
   }
 
 
+ UserSchema.methods.gravatar = function(size){
+
+
+ 	if(!this.size) size = 200;
+ 	if(!this.email) return 'https://gravatar.com/avatar/?s' + size +'&d=retro';
+ 	var md5 = crypto.createHash('md5').update(this.email).digest('hex');
+ 	return 'https://gravatar.com/avatar/  + md5 + ?s' + size +'&d=retro';
+
+}
 
  module.exports = mongoose.model('User', UserSchema);
