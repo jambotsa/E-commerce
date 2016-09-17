@@ -15,7 +15,7 @@ var UserSchema = new Schema({
 	},	
 
 	address	: String,
-	zipcode: String,
+	
 	history: [{
 		date:Date,
 		paid:{type: Number, default :0},

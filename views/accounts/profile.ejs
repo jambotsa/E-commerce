@@ -1,4 +1,4 @@
-<% layout ('layout') %>
+<%- layout ('layout') -%>
 
 <div class ="container">
 
@@ -12,6 +12,7 @@
 
 					<p> Name: <%= user.profile.name %> </p>
 					<p> Email: <%= user.email %>  </p>
+					
 
 					<% if (user.address ==="" || typeof user.address ==='undefined') { %>
 					<p> Address: <span style="color: #c0392b; font-weight: bold"> You have no address 
@@ -23,7 +24,7 @@
 					
 					<% } %>	
 					
-					<p> Zipcode: <%= user.zipcode %>  </p>
+					
 
 
 					<a href= "/edit-profile" class=" btn btn-primary btn-lg"> Edit Profile </a>

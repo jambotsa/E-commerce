@@ -10,6 +10,18 @@
        
         <ul class = "nav navbar-nav navbar-right">
 
+
+        <li> <a class="dropdown-toggle" data-toggle="dropdown" href="#"> Categories </a>
+        <ul class="dropdown-menu">
+s
+          <% for (var i = 0; i < categories.length; i++) { %>
+            <li><a href="/products/<%- categories[i]._id -%>"> <%- categories[i].name -%>   </a></li>
+
+          <% }  %>
+
+          </ul>
+        </li>  
+
         <% if (!user)  { %>
           <li> <a class="dropdown-toggle" data-toggle="dropdown" href="#"> Signup / Login </a>
 
