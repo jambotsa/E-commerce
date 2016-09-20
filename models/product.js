@@ -11,7 +11,7 @@ var ProductSchema= new Schema({
 })
 
 
-//feature of mongosastic whc says that elastic search is running on 9200 port
+//feature of mongosastic whc says that elastic search is running on 9200 port so that it knows we are using elastic search whc is running on serer9200
 ProductSchema.plugin(mongoosastic, {
 	hosts:[
 		'localhost:9200'

@@ -1,5 +1,5 @@
 var router = require('express').Router();
-//var User= require('../models/user');
+var User= require('../models/user');
 var Product = require('../models/product');
 
 
@@ -39,9 +39,34 @@ stream.on('error', function(err){
 	console.log(err);
 })
 
+//go to search route n pass this message of req.body.q
+router.post('/search', function(req,res,next) { 
+
+	res.redirect('/search?q=', + req.body.q);
+})
 
 
+// the only way to retrieve the data from post is use the request.query.q n it only works on url that has eg like this
+// /search?q= name(request.query.name)(?q= name of the query)
+router.get('/search', function(req,res,next) {
+	if(req.query.q){
+		Product.search({ //it will search the value whc is request.query.q from post n search in elastic search replica
+			query_string:{query: req.query.q} 
+		}, function(err, results) {
+			if (err) return next(err);
+			var data = results.hits.hits.map(function(hit){ //.map is a js builtin function to store the value in a new area 
+				return hit;	 
+			});
 
+				res.render('main/search-result',{
+					 query: req.query.q,
+					 data:date
+				});
+		});
+
+	}
+
+});
 
 
 router.get('/', function (req,res){
