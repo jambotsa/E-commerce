@@ -3,6 +3,35 @@ var User= require('../models/user');
 var Product = require('../models/product');
 
 
+function paginate(req,res,next) {
+
+	var perPage =9;
+		var page = req.params.page;
+		
+
+		//multilpe mongoose methods 
+		Product
+			.find()
+			.skip( perPage * page) // skip will skip to page no u click (9*2) it will skip 18 docs n go to page 3
+			.limit(perPage) // skip and limit these 2 will paginate all our products, limit will limit pages per query in our case it limits to 9 docs
+			.populate('category')   //, we are adding pagination to our route so later on we dont need to render all the data at once , imagine we have 5 million docs we do dont want to show all at once it will cause problem for our mongo db database 
+			.exec(function(err,products) { // executive these function on this methods and use mongoose method .count to count the docs in product database so that we divide total docs in no of pages 
+
+				if(err)return next (err);
+				Product.count().exec(function(err,count){
+					if(err)return next (err);
+					res.render('main/product-main',{
+						products:products,
+						pages: count/perPage
+					});
+				});
+			});
+
+
+
+}
+
+
 //this code is to map between the product database ans elastic search so that it creats a connection like a brodge
 Product.createMapping(function(err,mapping){
 	if (err) {
@@ -37,13 +66,13 @@ stream.on('close', function(){
 stream.on('error', function(err){
 
 	console.log(err);
-})
+});
 
 //go to search route n pass this message of req.body.q
 router.post('/search', function(req,res,next) { 
 
-	res.redirect('/search?q=', + req.body.q);
-})
+	res.redirect('/search?q='+  req.body.q);
+});
 
 
 // the only way to retrieve the data from post is use the request.query.q n it only works on url that has eg like this
@@ -53,27 +82,40 @@ router.get('/search', function(req,res,next) {
 		Product.search({ //it will search the value whc is request.query.q from post n search in elastic search replica
 			query_string:{query: req.query.q} 
 		}, function(err, results) {
+			results:   //results = hits hits n value we want 
 			if (err) return next(err);
-			var data = results.hits.hits.map(function(hit){ //.map is a js builtin function to store the value in a new area 
+			var data = results.hits.hits.map(function(hit){ //.map is a js builtin function to store the value we want to find in a new area 
 				return hit;	 
 			});
 
-				res.render('main/search-result',{
-					 query: req.query.q,
-					 data:date
-				});
+				res.render('main/search-result',{ //if successful render the data on  the search-result page
+					 query: req.query.q,	
+					 data:data
+				});	
 		});
 
 	}
 
 });
 
-
-router.get('/', function (req,res){
+//calling the paginate function in this route
+router.get('/', function (req,res,next){  //adding the validation if user has logged in then render different page or else not render home page
+	
+	if(req.user) {  // we wanna limit 9 products per page, 
+		paginate(req,res,next);
+	} else {
 	res.render('main/home');
+	}
+});
 
+//route to get page 
+router.get('/page/:page', function(req,res,next){
+	paginate(req,res,next);
 
 });
+
+
+
 
 router.get('/about', function (req,res){
 	res.render('main/about');
