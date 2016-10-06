@@ -16,6 +16,8 @@ var secret = require('./config/secret');
 var User = require('./models/user');
 var Category = require('./models/category');
 
+var cartLength = require('./middlewares/middlewares'); // lecture 50
+
 
 var app = express();
 
@@ -53,6 +55,8 @@ app.use(function(req, res, next) {
 	res.locals.user = req.user;
 	next();
 })
+
+app.use(cartLength); // lecture 50
 
 app.use(function(req, res, next) {
 
