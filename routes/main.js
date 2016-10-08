@@ -68,6 +68,27 @@ stream.on('error', function(err){
 	console.log(err);
 });
 
+
+
+//Lecture 51 to add Post route so that we can add products to our cart
+router.post('/product/product_id', function(req,res,next){ // whenever we are gonna buy product we are using this url
+	Cart.findOne({ owner:req.user._id}, function(err,cart){ // find the owner of the cart ,if found 
+		cart.items.push({ // push all the items based on request.values to the array of items in cart 
+			item: req.body.product_id, // specifications of the items 
+			price: parseFloat(req.body.priceValue),
+			quantity: parseInt(req.body.quantity)
+		});
+
+		cart.total = ( cart.total + parseFloat(req.body.priceValue)).toFixed(2); // to 2 decimal points 
+
+		cart.save(function(err) {
+			if(err) return next(err);
+			return res.redirect('/cart'); // redirect to cart page
+
+		});
+	});
+});
+
 //go to search route n pass this message of req.body.q
 router.post('/search', function(req,res,next) { 
 
