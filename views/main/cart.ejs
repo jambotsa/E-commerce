@@ -1,0 +1,57 @@
+<%- layout('layout') -%>
+
+<div class="container">
+	<div class="row">
+		<div class="col-lg-6">
+		<! --now we gonna loop the cart object whc is in main.js line 79 -->
+
+		<% for (var i=0; i<foundCart.items.lenght; i++) { %>
+			<div class="list-group">
+				<span class="list-group-item">
+					<div class="row">
+						<div class="col-md-3">
+							
+							<span><img class="product-image" src="<%- foundCart.items[i].item.image -%>"></span>
+
+						</div>
+
+
+						<div class="col-md-6">
+
+						<! --all these are css bootstrap class -->
+						<p class="list-group-item-heading"><%- foundCart.items[i].item.name -%></p>
+
+
+						</div>
+
+						<div class="col-md-3">
+
+						<p ><%- foundCart.items[i].item.quantity -%></p>
+						<p ><%- foundCart.items[i].item.price -%></p>
+
+
+
+						</div>
+
+					</div>
+
+				</span>
+			</div>
+		<% } %>
+
+
+		</div>
+
+		<div class="3"></div>
+
+
+		<div class="3"></div>
+
+
+	</div>
+	
+</div>		
+
+
+
+

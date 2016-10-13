@@ -1,6 +1,7 @@
 var router = require('express').Router();
 var User= require('../models/user');
 var Product = require('../models/product');
+var Cart= require('../models/cart');
 
 
 function paginate(req,res,next) {
@@ -68,10 +69,23 @@ stream.on('error', function(err){
 	console.log(err);
 });
 
+// lecture 54 creating cart route
+router.get('/cart', function(req,res,next){
+	Cart
+		.findOne({ owner:req.user._id}) // first it searches in the cart database for requset.user.id does exists or not
+		.populate('items.item') // then we want to poplate the items.item coz we want to get info like image name original product  n so we added product_id to the post route// coz in cart.js there is an item in the  objectid type
+		.exec(function(err,fountCart) { /// execute annonomus funtion on this method if cart is found then render the page n supply the page witht the data that could be used that is foundcart
+			if(err) return next(err);
+			res.render('main/cart',{
+				foundCart:foundCart
+			});
+		});
 
+
+});
 
 //Lecture 51 to add Post route so that we can add products to our cart
-router.post('/product/product_id', function(req,res,next){ // whenever we are gonna buy product we are using this url
+router.post('/product/:product_id', function(req,res,next){ // whenever we are gonna buy product we are using this url
 	Cart.findOne({ owner:req.user._id}, function(err,cart){ // find the owner of the cart ,if found 
 		cart.items.push({ // push all the items based on request.values to the array of items in cart 
 			item: req.body.product_id, // specifications of the items 
