@@ -74,10 +74,12 @@ router.get('/cart', function(req,res,next){
 	Cart
 		.findOne({ owner:req.user._id}) // first it searches in the cart database for requset.user.id does exists or not
 		.populate('items.item') // then we want to poplate the items.item coz we want to get info like image name original product  n so we added product_id to the post route// coz in cart.js there is an item in the  objectid type
-		.exec(function(err,fountCart) { /// execute annonomus funtion on this method if cart is found then render the page n supply the page witht the data that could be used that is foundcart
+		.exec(function(err,foundCart) { /// execute annonomus funtion on this method if cart is found then render the page n supply the page witht the data that could be used that is foundcart
 			if(err) return next(err);
 			res.render('main/cart',{
-				foundCart:foundCart
+				foundCart:foundCart, // this foundCart has to passed on to the cart.ejs page
+				message: req.flash('remove') //this we nee to add another object called message after we fill the remove form in cart.ejs
+
 			});
 		});
 
@@ -98,6 +100,23 @@ router.post('/product/:product_id', function(req,res,next){ // whenever we are g
 		cart.save(function(err) {
 			if(err) return next(err);
 			return res.redirect('/cart'); // redirect to cart page
+
+		});
+	});
+});
+
+
+//lecture 56 adding remove route 
+router.post('/remove', function(req, res, next) { // 
+	Cart.findOne({ owner:req.user._id}, function(err,foundCart) { //we need to get the id of the items n once we have that we can easily pull the product that we dont need 
+		foundCart.items.pull(String(req.body.item));
+
+		foundCart.total = (foundCart.total - parseFloat(req.body.price)).toFixed(2); // we want a minus the total of the cart price n the item price 
+		foundCart.save(function(err,found) {
+			if(err) return next (err);
+			req.flash('remove','Successfully removed'); //save n flash the message 
+
+			res.redirect('/cart'); // now we gonna add the remove form to cart.ejs next step add form to cart.ejs
 
 		});
 	});
