@@ -6,6 +6,9 @@
 // this iis a jquery code 
 $(function(){
 
+	// this identifies website in the create token call below , we copied this key from https://stripe.com/docs/custom-form just above the step 2 then just replace the ket with publishable key 
+	 Stripe.setPublishableKey('pk_test_5cSOI2dfLdW1Pp53zSi6hdBV'); // this is the publishable key we got from the stripe.com-dashboard-account setting-API - whc is for the client side // we need to paste the script from step 1 in javascriptonly.ejs so that we can use it 
+
 //need to taret the id whc is search 
 	$('#search').keyup(function() { // keyup is a jquery function where it listens to what u r typing 
 		// so whever u r typing on a targetid in the input text filed which is search then it would immediately run this function n do some ajax call 
@@ -99,30 +102,64 @@ $(function(){
 	});
 
 
-	//$(document).on('click', '#minus', function(e) { // so when u click on plus button 
-		//e.preventDefault(); // is to actly prevent from the ppage to be refreshed
-
-		//var priceValue = parseFloat($('#pricaValue').val()); //we parse value in float n quantity in int form 
-		//var quantity = parseInt($('#quantity').val());
-
-		//if(quantity ==1) {
-		//	priceValue= $('#priceHidden').val();
-		//	quantity = 1;
-		//} else {
- 
-			//priceValue -= parseFloat($('#priceHidden').val()); // increment the price value with the original price from the product 
-			//quantity -= 1; // increment the quantity
-
-		//}
-
-		//$('#quantity').val(quantity); // replace the quantity
-		//$('#priceValue').val(priceValue.toFixed(2)); // the toatal price value to 2 decimal
-		//$('#total').html(quantity); // total
-
-	//});
+	// pasted from https://stripe.com/docs/custom-form step 2 code Create a single use token
+  	
 
 
+	// pasted from https://stripe.com/docs/custom-form step 3 code Sending the form to your server
+	function stripeResponseHandler(status, response) {
+  		// Grab the form:
+  		//console.log(" entered in form to capture user card details " );
+  		var $form = $('#payment-form'); // we want to set all the form input to the new
+  		// variable name form , if u use the id of the form whc is payment form  it will
+  		// take all the input values
 
+  		if (response.error) { // Problem! 
+
+    	// Show the errors on the form:
+    	$form.find('.payment-errors').text(response.error.message); // if error in details entered it will show error
+    	$form.find('.submit').prop('disabled', false); // Re-enable submission button if the details are wrong 
+
+  		} else { // if no error stripe returns with an object which contains unique id last 4 digits of credit card or debit card n type of card like visa , mastercard
+  		//response contains id and card , whc contains additional card details 
+    	// Get the token ID:
+    	//console.log(" Trying to call create token " );
+   	 	var token = response.id; // then set that object to a new variable called token 
+   	 	//console.log( " The token value " , token);
+    	// Insert the token ID into the form so it gets submitted to the server:
+    	$form.append($('<input type="hidden" name="stripeToken" />').val(token)); // we want to append the token whc is  hidden value , the name is same as req.body.stripeToken whc is line 222 in man.js, n it will set the value as response.id whc is idcard 
+
+    	// Submit the form:
+    	$form.get(0).submit(); // lastly we wanna resubmit the form 
+  		}
+	};
+
+
+	$('#payment-form').submit(function(event){
+  	var $form = $(this);
+
+  	// we run event function on form itself so user clicks on 
+		// it do something  Disable the submit button to prevent repeated clicks:
+    	$form.find('button').prop('disabled', true); // set this whc is the form itself to new 
+    	//var called form n disable the button if user clicks on it so that we can send 1 request 
+    	//at 1 time 
+
+    	// Request a token from Stripe:
+    	Stripe.card.createToken($form, stripeResponseHandler); // use stipe object to create a token 
+    	//by giving it a parameter whc is the form as well as function whc is stripe response handler
+    	// to invoke it 
+
+    	// Prevent the form from being submitted:
+    	return false; // we wanna return false to prevent the form from sublitting default action 
+    	//like antistring anti cart no 
+  	});
+
+  	
+  	
 
 });
- 
+
+
+
+
+

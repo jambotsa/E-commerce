@@ -4,6 +4,12 @@ var Product = require('../models/product');
 var Cart= require('../models/cart');
 
 
+
+var async = require('async');
+
+
+var stripe = require('stripe') ('sk_test_DHzec6lZ9UP3zecrBJqB7dZ0'); // first link got from my stipe account api key setting first link // install stripe by npm install stripe --save in cmd before writing this then add the payment route down 
+
 function paginate(req,res,next) {
 
 	var perPage =9;
@@ -77,7 +83,7 @@ router.get('/cart', function(req,res,next){
 		.exec(function(err,foundCart) { /// execute annonomus funtion on this method if cart is found then render the page n supply the page witht the data that could be used that is foundcart
 			if(err) return next(err);
 			res.render('main/cart',{
-				foundCart:foundCart, // this foundCart has to passed on to the cart.ejs page
+				foundCart: foundCart, // this foundCart has to passed on to the cart.ejs page
 				message: req.flash('remove') //this we nee to add another object called message after we fill the remove form in cart.ejs
 
 			});
@@ -107,11 +113,13 @@ router.post('/product/:product_id', function(req,res,next){ // whenever we are g
 
 
 //lecture 56 adding remove route 
-router.post('/remove', function(req, res, next) { // 
-	Cart.findOne({ owner:req.user._id}, function(err,foundCart) { //we need to get the id of the items n once we have that we can easily pull the product that we dont need 
+router.post('/remove', function(req, res, next) { 
+	console.log(" Coming here ");
+	Cart.findOne({ owner: req.user._id}, function(err, foundCart) { //we need to get the id of the items n once we have that we can easily pull the product that we dont need 
 		foundCart.items.pull(String(req.body.item));
+		
 
-		foundCart.total = (foundCart.total - parseFloat(req.body.price)).toFixed(2); // we want a minus the total of the cart price n the item price 
+		foundCart.total = (foundCart.total - parseFloat(req.body.price)).toFixed(2); // we want a minus the total of the cart price n the item pric
 		foundCart.save(function(err,found) {
 			if(err) return next (err);
 			req.flash('remove','Successfully removed'); //save n flash the message 
@@ -207,6 +215,96 @@ router.get('/product/:id', function(req,res,next){
 	});
 
 });
+
+// after u install stripe n put the key in the require var stripe
+router.post('/payment', function(req,res,next){
+	
+console.log(" Reaching inside the payments route which will call the Stripe Create Token Function ");
+ // we wanna get the the stripe token , we wanna prepare the name 
+ // of the stripe token , we wil get stirpe token on the client 
+ // site as usual coz we r using request.body 
+	var stripeToken = req.body.stripeToken;   
+
+
+// we wanna add the total of the charges , this would be the
+// total price of cart n later we wanna send it to stripe we 
+// gota multiply by 100 coz in stripe its in cent for eg 10 $ is 1000 cent
+
+	var currentCharges = Math.round(req.body.stripeMoney*100); 
+	
+	//send to stripe..., there is another way to write it by promise 
+	// where it is similiar to async.waterfall where it runs first n then second
+
+// use stripe method to create customer so that we can see
+// people who bought our stuff , like me as an admin charge people,
+// like user bought item we can actually see whc user user bought item n their email n name 
+	stripe.customers.create({  
+		source:stripeToken,  
+	}).then(function(customer){
+		return stripe.charges.create({  // we wanna add all the info so that we can charge the 
+			//customer like amt , currency n last passin the customerid so that we know that this
+			// user has unique id
+			amount:currentCharges,
+			currency:'usd',
+			customer: customer.id
+		});
+	}).then(function(charge) { // anonymous function to create history page we need to include
+	                           // async waterfall
+		async.waterfall([
+			function(callback) { // 1st function searching cart owner , if we find cart pass it 
+				                 //to next function
+				Cart.findOne({ owner:req.user._id }, function(err,cart){
+					callback(err,cart); // if error callback
+				});
+			},
+
+			function(cart,callback) { // 2nd function it will search for the login user, 
+				                      //if the ifo exists or not,
+				User.findOne({ _id: req.user._id}, function(err,user){
+					if(user) {
+						for(var i=0; i<cart.items.length; i++) { // if user exists loop the entire 
+							                // cart push the items n the price to the user.history
+							user.history.push({
+								item: cart.items[i].item,
+								paid: cart.items[i].price
+
+							});
+						}
+
+						user.save(function(err,user){ // then save the user object 
+							if(err) return next(err);
+							callback(err,user); // if no error  pass the user object to the final function
+						});
+
+					}
+				});
+			},
+
+
+			function(user,callback) { // new mongoose method .update  final function 
+				Cart.update({ owner: user._id}, {$set:{ items:[], total: 0 }}, function(err,updated){ 
+				     // cart searches for owner n check the user.id , 
+					// it will set the items to empty array  price will go back to 0 coz we paid it n 
+					//finally add anoymou function updated, 
+					if(updated) { // if the cart is updated it redirects to profile
+						res.redirect('/profile');
+					}
+				}); 
+
+			}
+
+		
+		])	
+
+});
+
+});
+
+// first we get the tstripetoken from the client site  n then stripe has the rle the amt of money is in cent i.e *100,then
+
+
+//b4 this we need to have UI whr we can actly click the button to buy all the productas that we have to put in the cart 
+
 
 //router.get('/users',function(req,res){
 //	User.find({}, function(err,users){
