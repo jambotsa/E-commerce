@@ -218,7 +218,7 @@ router.get('/product/:id', function(req,res,next){
 
 // after u install stripe n put the key in the require var stripe
 router.post('/payment', function(req,res,next){
-	
+		
 console.log(" Reaching inside the payments route which will call the Stripe Create Token Function ");
  // we wanna get the the stripe token , we wanna prepare the name 
  // of the stripe token , we wil get stirpe token on the client 
@@ -281,8 +281,9 @@ console.log(" Reaching inside the payments route which will call the Stripe Crea
 			},
 
 
-			function(user,callback) { // new mongoose method .update  final function 
+			function(user) { // new mongoose method .update  final function 
 				Cart.update({ owner: user._id}, {$set:{ items:[], total: 0 }}, function(err,updated){ 
+					//update the entire cart 
 				     // cart searches for owner n check the user.id , 
 					// it will set the items to empty array  price will go back to 0 coz we paid it n 
 					//finally add anoymou function updated, 

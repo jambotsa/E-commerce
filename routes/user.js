@@ -1,7 +1,7 @@
 var router = require('express').Router();
 var User = require ('../models/user');
 var passport = require('passport');
-var passportconf = require('../config/passport');
+var passportConf = require('../config/passport');
 var async = require('async');
 var Cart = require('../models/cart');
 
@@ -18,12 +18,31 @@ router.post('/login', passport.authenticate('local-login',{
 }));
 
 
-router.get('/profile',function(req,res,next){
-	User.findOne({ _id: req.user._id}, function(err,user){
-		if(err) return next(err);
-		res.render('accounts/profile',{user:user});
-});
-});
+router.get('/profile',passportConf.isAuthenticated, function(req,res,next){ 
+	 //added the passport middleware to validate the user 
+	 //if user is authenticated then go ahead if not go to login page whc is explained in config --passport--line 54
+	 // if user has logged in then we wanna get the user object by finding the request.user._id 
+	 // n populte the history so that we can acces wat is there in the hisory 
+	User
+		.findOne({ _id: req.user._id})
+		.populate('history.item')
+		.exec(function(err,foundUser){
+			// we wanna execute an anonymous function get the result whc is foundUser
+			//and pass into profile page 
+
+			if(err) return next(err);
+
+			res.render('accounts/profile', {user:foundUser });
+		});
+
+});	
+
+
+	//User.findOne({ _id: req.user._id}, function(err,user){
+		//if(err) return next(err);
+		//res.render('accounts/profile',{user:user});
+//});
+
 
 router.get('/signup',function(req,res,next){
 	res.render('accounts/signup',{
@@ -112,9 +131,28 @@ router.post('/edit-profile', function(req,res,next) {
 		 		req.flash('success','Successfully edited your profile');
 		 		return res.redirect('/edit-profile');
 
-		 	})
-		})
-	})
+		 	});
+		});
+	});
+
+//this route is to send the user to facebook to do the authentication, once authenticated it will call the below route
+//passport.authenticate is the middleware,there is no name given for middleware so default is facebook
+//scope: by default facebook will provide with the info by email, we specify with scope
+// if we want email from facebook we got to put scope
+router.get('/auth/facebook', passport.authenticate('facebook', {scope: 'email'}));
+
+// this route is to handle the callback , once facebook has authenticated the user we want to redirect 
+//the user to profile sor succes n login for failure 
+
+router.get('/auth/facebook/callback', passport.authenticate('facebook', {
+
+	successRedirect: '/profile',
+	failureRedirect: '/login',
+
+}));
+
+
+
 
 
 module.exports = router;
